@@ -73,8 +73,14 @@ class TwigView extends View {
 			ROOT.DS.'cake'.DS.'libs'.DS.'view'
 		);
 		
+		// plugin support
+		if ($controller->plugin) {
+			$pluginViewPath = APP.'plugins'.DS.$controller->plugin.DS.'views';
+			array_unshift($this->templatePaths, $pluginViewPath); // look here first
+		}
+		
 		// we always look in APP, this includes error templates.
-		$loader = new Twig_Loader_Filesystem(APP.'views');
+		$loader = new Twig_Loader_Filesystem($this->templatePaths);
 		
 		// setup twig and go.
 		$this->Twig = new Twig_Environment($loader, array(
