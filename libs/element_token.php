@@ -78,9 +78,9 @@ class Twig_Node_Element extends Twig_Node
     {
         $compiler->addDebugInfo($this);
     	
-		$template = $this->getNode('expr')->getAttribute('value');
-		$value = 'elements' . DS . $template . '.tpl'; // prefix elements path
-		$this->getNode('expr')->setAttribute('value', $value);
+        $template = $this->getNode('expr')->getAttribute('value');
+        $value = 'elements' . DS . $template . '.tpl'; // prefix elements path
+        $this->getNode('expr')->setAttribute('value', $value);
 		
         if ($this->getNode('expr') instanceof Twig_Node_Expression_Constant) {
             $compiler
