@@ -21,7 +21,7 @@ Once this branch is complete, v0.7 will go into master.
 #### via Archive
 
 Download the repository (zip button), unzip it and rename the extracted folder to ```twig```.
-Then put the twig folder inside your ```plugins``` and you are done.
+Then put the ```twig``` folder inside your ```plugins``` and you are done.
 
 #### via GitHub
 
@@ -32,15 +32,31 @@ Just clone the repository directly into your app.
 
 ## Enabling the View
 
-Inside your ```app_controller.php``` file add the following:
+Inside your ```app_controller.php``` add the following:
 
     class AppController extends Controller {
-        public $view = 'Twig.Twig';
+        public $view = 'Twig.Twig'; // use twig
     }
 
-Now start creating view files using the ```.tpl``` extension. You do not delete any existing ctp-files. The view still supports all your views 
-and using twig isn't mandatory once you installed the plugin. It is just that the view prefers .tpl and wont do anything until it finds a template 
-with that exact extension. 
+Now start creating view files using the ```.tpl``` extension. 
+
+Any ```.ctp``` template will remain working just as before until you add a ```.tpl``` file with the same name. The TwigView simply **prefers** files with .tpl extension and does nothing if there is none, but a suitable ```.ctp``` is present. 
+
+This makes migrating very easy.
+
+This is probably how it looks right now.
+
+    views/users/
+      login.ctp
+
+If you want to rewrite the view using Twig simply create a ```.tpl```.
+
+    views/users/
+      login.ctp
+      login.tpl
+
+They can live next to each other. No problem. Twig will load the .tpl as long as the view is set.
+
 
 ## CakePHP specific examples
 
