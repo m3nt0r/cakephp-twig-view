@@ -10,12 +10,12 @@
 				<th>{{ paginator.sort('email') }}</th>
 				<th>{{ paginator.sort('created') }}</th>
 				<th>Actions</th>
-		  </tr>
+			</tr>
 		</thead>
-	  <tbody>
+		<tbody>
 		{% if users is iterable %}
 			{% for row in users %} 
-			  <tr>
+				<tr>
 					<td>{{ row.User.id }}</td>
 					<td>{{ row.User.email }}</td>
 					<td>{{ row.User.created }}</td>
@@ -26,17 +26,15 @@
 						})
 					}}
 					</td>
-			  </tr>
-		  {% endfor %}
-		{% else %}
-		    <tr>
-					<td colspan="4">
-						Sorry, no users found.
-					</td>
 				</tr>
+			{% endfor %}
+		{% else %}
+		<tr>
+			<td colspan="4">Sorry, no users found.</td>
+		</tr>
 		{% endif %}
 		</tbody>
-  </table>
+	</table>
 	
 </div>
 

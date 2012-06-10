@@ -8,27 +8,37 @@
 
 {% block table %}
 <div class="container">
-	<table class="table table-bordered" cellpadding="0" cellspacing="0">
+	<table class="table table-bordered">
+		<thead>
+			<tr>
+				<th>{{ paginator.sort('id') }}</th>
+				<th>{{ paginator.sort('email') }}</th>
+				<th>{{ paginator.sort('created') }}</th>
+				<th>Actions</th>
+		  </tr>
+		</thead>
+	  <tbody>
+		{% if users is iterable %}
+			{% for row in users %} 
+			  <tr>
+					<td>{{ row.User.id }}</td>
+					<td>{{ row.User.email }}</td>
+					<td>{{ row.User.created }}</td>
+					<td>
+					{{ 
+						html.link('Edit User'|trans, {
+							'controller': 'users', 'action': 'edit', 0: row.User.id
+						})
+					}}
+					</td>
+			  </tr>
+		  {% endfor %}
+		{% else %}
 		<tr>
-			<th>{{ paginator.sort('id') }}</th>
-			<th>{{ paginator.sort('email') }}</th>
-			<th>{{ paginator.sort('created') }}</th>
-			<th>Actions</th>
-	  </tr>
-	  {% for row in users %}
-	  <tr>
-			<td>{{ row.User.id }}</td>
-			<td>{{ row.User.email }}</td>
-			<td>{{ row.User.created }}</td>
-			<td>
-			{{ 
-				html.link('Edit User', {
-					'controller': 'users', 'action': 'edit', 0: row.User.id
-				})
-			}}
-			</td>
-	  </tr>
-	  {% endfor %}
+			<td colspan="4">Sorry, no users found.</td>
+		</tr>
+		{% endif %}
+		</tbody>
   </table>
 </div>
 {% endblock %}  
