@@ -32,5 +32,6 @@
 
 {# this is how we import elements. #}
 <div class="container">
-	{% include 'test.ctp' %} 
+	{% include 'my-element.tpl' %} 
 </div>
+
