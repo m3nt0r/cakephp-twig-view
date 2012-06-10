@@ -5,6 +5,8 @@ This plugin for the CakePHP Framework allows you to use the Twig Templating Lang
 Apart from enabling you to use most of Twig's features the plugin is tightly integrated with 
 the CakePHP view renderer giving you full access to helpers, objects and elements.
 
+
+
 ## New in this version
 
 - Complete rewrite
@@ -14,6 +16,9 @@ the CakePHP view renderer giving you full access to helpers, objects and element
 - Easy to migrate
 
 The previous version 0.6 can be found [here](https://github.com/m3nt0r/cakephp-twig-view/tree/twig.six "twig.six branch")
+
+This version was written on CakePHP 1.3. Support for 2.x may be limited to non-existant.
+If you run on 2.x i suggest that you check out the [fork from predominant](https://github.com/predominant/TwigView)
 
 ## Installation
 
