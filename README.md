@@ -1,76 +1,86 @@
-# Twig for CakePHP
+# Twig for CakePHP (v0.7 rock-lobster)
 
 This plugin for the CakePHP Framework allows you to use the Twig Templating Language.
 
 Apart from enabling you to use most of Twig's features the plugin is tightly integrated with 
 the CakePHP view renderer giving you full access to helpers, objects and elements.
 
+## New in this branch
+
+- Complete rewrite
+- Latest Twig (v1.8.2 atm)
+- Easy to upgrade
+- Easy to install
+- Easy to migrate
+
+This is going to replace the v0.6 branch and the last version was 0.6.1. 
+Once this branch is complete, v0.7 will go into master.
+
 ## Installation
 
-Download the repository, create a folder called ```twig_view``` in your plugins folder. Extract.  
-Alternatively: Just clone the repository directly into your app.
+#### via Archive
 
-    $ cd app/plugins 
-    $ git clone git://github.com/m3nt0r/cakephp-twig-view.git twig_view
+Download the repository (zip button), unzip it and rename the extracted folder to ```twig```.
+Then put the twig folder inside your ```plugins``` and you are done.
 
-### Vendor Files
+#### via GitHub
 
-Download the [Twig Library](http://www.twig-project.org/) and move ```(archive)/*``` to ```plugins/twig_view/vendors/Twig```.  
-Alternatively: Just init the submodules of this repository. This will grab the latest version.
+Just clone the repository directly into your app.
 
-    $ git submodule init
-    $ git submodule update
+    $ cd plugins 
+    $ git clone git://github.com/m3nt0r/cakephp-twig-view.git twig
 
-### Cache Permissions
+## Enabling the View
 
-Make the default view-cache folder writeable. 
+Inside your ```app_controller.php``` file add the following:
 
-    APP/plugins/twig_view/tmp/views
-
-Alternatively: Set where you want cache files to be stored.
-
-    define('TWIG_VIEW_CACHE', APP . 'tmp');
-
-## Using the View Class
-
-To make CakePHP aware of TwigView edit your ```app_controller.php``` file and add the following:
-
-    class AppController extends Controller 
-    {
-        public $view = 'TwigView.Twig';
+    class AppController extends Controller {
+        public $view = 'Twig.Twig';
     }
 
-Now start creating view files using the ```.tpl``` extension.
+Now start creating view files using the ```.tpl``` extension. You do not delete any existing ctp-files. The view still supports all your views 
+and using twig isn't mandatory once you installed the plugin. It is just that the view prefers .tpl and wont do anything until it finds a template 
+with that exact extension. 
 
-## Default Layouts
+## CakePHP specific examples
 
-This plugin comes with all default layouts converted to Twig. Examples can be found in:
+This plugin comes with all default layouts converted to Twig. There's also a plain index view 
+for a users table with common php mixed in. It's really not much
 
-     plugins/twig_view/examples
+Examples can be found in:
+
+     ./examples
 
 
-## Themes
+## CakePHP Elements
+
+We use the `include` tag to import elements. This requires that elements are twig templates. Using ```.ctp``` would work but any PHP inside will not be executed. 
+
+In exchange for this limitation you can import elements as easy as:
+
+    {% include 'test.ctp' %} 
+
+## CakePHP Themes
 
 The plugin has support for themes and works just like the "Theme" view. Simply add the ```$theme```
 property to your controller and you're set.
 
-    class AppController extends Controller 
-    {
-        public $view = 'TwigView.Twig';
-        public $theme = 'rockstar';
+    class AppController extends Controller {
+        public $view = 'Twig.Twig';
+        public $theme = 'lobster';
     }
 
 This will cause the view to also look in the "themed" folder for templates. In the above example
 templates in the following directory are favored over their non-themed version.
 
-    app/views/themed/rockstar/
+    app/views/themed/lobster/
 
-If you, for example, want to overwrite the 'layouts/default.tpl' file in the 'rockstar' theme, 
+If you, for example, want to overwrite the ```layouts/default.tpl``` file in the ```lobster``` theme, 
 then create this file:
 
-    app/views/themed/rockstar/layouts/default.tpl
+    app/views/themed/lobster/layouts/default.tpl
 
-## Using Helpers inside Templates
+## CakePHP Helpers
 
 All helper objects are available inside a view and can be used like any other variable inside Twig.
 
@@ -99,121 +109,6 @@ A more complex example, FormHelper inputs:
       })
     }}
 
-## Referencing View Elements
+## Caching
 
-Elements must be ```.tpl``` files and are parsed as Twig templates. Using ```.ctp``` is not possible.
-In exchange for this limitation you can import elements as easy as this:
-
-    {{ element 'sidebar/about' }}
-
-## Translating Strings
-
-The ```trans``` filter can be used on any string and simply takes the preceeding string and 
-passes it through the ```__()``` function. 
-
-    {{
-      form.input('email', {
-        'label': 'Your E-Mail Address'| trans
-      })
-    }}
-
-This is the equivalent of writing:
-
-    <?php echo $this->Form->input('email', array(
-       'label' => __("Your E-Mail Address", true)
-    )); ?>
-
-## Translating multiple lines
-
-The trans-block element will help you with that. This is especially useful when writing email 
-templates using Twig.
-
-    {% trans %}
-    Hello!
-    
-    This is my mail body and i can translate it in X languages now.
-    We love it!
-    {% endtrans %}
-
-## TwigView Custom Filters
-
-This plugin comes with a couple of handy filters, just like 'trans', piping some core CakePHP 
-functions into Twig templates.
-
-### ago
-
-Shortcut to TimeHelper::timeAgoInWords
-
-    {{ user.created|ago }}
-
-### low
-
-Convert a string to lower case
-
-    {{ 'FOO'|low }}
-
-### up
-
-Convert a string to upper case
-
-    {{ 'foo'|up }}
-
-### debug
-
-Display the debug (pre+print_r) output
-
-    {{ user|debug }}
-
-### pr
-
-Display just the print_r output
-
-    {{ user|pr }}
-
-### env
-
-Display the value from a environment variable
-
-    {{ 'HTTP_HOST'|env }}
-
-### size
-
-Convert byte integer to a humand readable size
-
-    {{ '3535839525'|size }}    //=> 3.29 GB
-
-### p
-
-Formats a number with a level of precision.
-
-    {{ '0.555'|p(2) }}    //=> 0.56
-
-### curr
-
-Display floating point value as currency value. USD, GBP and EUR only
-
-    {{ '5999'|curr }}         // default, $5,999.00 
-    {{ '5999'|curr('GBP') }}  // £5,999.00
-    {{ '5999'|curr('EUR') }}  // €5.999,00 
-
-### pct
-
-Formats a number into a percentage string.
-
-    {{ '2.3'|pct }}    //=> 2.30%
-
-
-## Twig Built-In Filters
-
-For a list of available filters please refer to the Twig Manual  
-http://www.twig-project.org/doc/templates.html#list-of-built-in-filters
-
-## Accessing View Instance
-
-In some cases it is useful to access ```$this```, for example to build a DOM id from 
-the current controller and action name. 
-
-The object is accessible through ```_view```. 
-
-    <div class="default" id="{{ _view.name|lower ~ '_' ~ _view.action|lower }}">
-
+The interal Twig caching engine has been disabled in favor of CakePHPs own view caching mechanism.
