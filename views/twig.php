@@ -63,7 +63,7 @@ class TwigView extends ThemeView {
 	 * @var array
 	 */
 	public $twigOptions = array(
-		'fileExtension' => '.twig',
+		'fileExtension' => '.tpl',
 		'extensions' => array(
 			'i18n',
 			'number',
