@@ -19,38 +19,25 @@ App::import('Core', 'Theme');
 App::import('Vendors', 'Twig.Twig_Environment', array(
 	'file' => 'twig-'.TWIG_VERSION.DS.'lib'.DS.'Twig'.DS.'Autoloader.php'
 ));
-
 Twig_Autoloader::register();
 
 /**
- * CakePHP i18n Support
+ * Inherit for Filter Extensions
  *
- * @param string $text 
- * @param string $param1 (plural, domain or empty(default))
- * @param mixed $param2
- * @param mixed $param3 
- * @return string
+ * @package default
  * @author Kjell Bublitz
  */
-function transFilter($text, $param1=null, $param2=null, $param3=null) {
-	
-	// 'Word'|trans('Words', 'users', 5)
-	if (is_numeric($param3)) {
-		return __dn($domain=$param2, $singular=$text, $plural=$param1, $count=$param3, true);
+abstract class TwigView_Filter {
+	protected static function helperObject($className) {
+		$registryKey = 'TwigView_Filter'.$className;
+		$object = ClassRegistry::getObject($registryKey);	
+		if (is_a($object, $className)) return $object;
+		$object = new $className();
+		ClassRegistry::addObject($registryKey, $object);	
+		return $object;
 	}
-	
-	// 'Word'|trans('Words', 5)
-	if (is_numeric($param2)) {
-		return __n($singular=$text, $plural=$param1, $count=$param2, true);
-	}
-	
-	// 'Word'|trans('users')
-	if (!empty($param1)) {
-		return __d($domain=$param1, $text, true);
-	}
-	
-	return __($text, true);
 }
+
 
 /**
  * TwigView Class 
@@ -61,6 +48,11 @@ function transFilter($text, $param1=null, $param2=null, $param3=null) {
  */
 class TwigView extends ThemeView {
 	
+	public $twigOptions = array(
+		'filters' => array('i18n','number','text','time'),
+		'extension' => '.twig'
+	);
+	
 	/**
 	 * Constructor
 	 *
@@ -70,14 +62,26 @@ class TwigView extends ThemeView {
 	 */
 	function __construct(&$controller, $register = true) {
 		parent::__construct($controller, $register);
+		$this->twigPluginPath = dirname(dirname(__FILE__)) . DS;
+		$this->twigFilterPath = $this->twigPluginPath . 'filters';
+		
+		// import plugin options
+		$appOptions = Configure::read('TwigView');
+		if (!empty($appOptions) && is_array($appOptions)) {
+			$this->twigOptions = array_merge($this->twigOptions, $twigOptions);
+		}
+		
+		// set preferred extension
+		$this->ext = $this->twigOptions['extension'];
 		
 		// Setup template paths
-		// Make "{% include 'test.ctp' %}" a replacement for self::element()
-		$paths = $this->_paths(Inflector::underscore($this->plugin));
+		$pluginFolder = Inflector::underscore($this->plugin);
+		$paths = $this->_paths($pluginFolder);
 		foreach ($paths as $path) {
+			// Make "{% include 'test.ctp' %}" a replacement for self::element()
 			$paths[] = $path . 'elements' . DS;
 		}
-			
+		
 		// Setup Twig Environment
 		$loader = new Twig_Loader_Filesystem($paths);
 		$this->Twig = new Twig_Environment($loader, array(
@@ -85,15 +89,12 @@ class TwigView extends ThemeView {
 			'debug' => (Configure::read() > 0),
 		));
 		
-		// i18n
-		$this->Twig->addFilter('trans', new Twig_Filter_Function('transFilter'));
-		
 		// Do not escape return values (from helpers)
 		$escaper = new Twig_Extension_Escaper(false);
 		$this->Twig->addExtension($escaper);
 		
-		// preferred extension
-		$this->ext = '.twig';
+		// Add TwigView CakePHP filters
+		$this->_loadCustomFilters();
 	}
 	
 	/**
@@ -134,9 +135,9 @@ class TwigView extends ThemeView {
 		
 		$___viewFolder = dirname($___viewFn);
 		$___filename = basename($___viewFn);
-		$___extension = array_pop(explode('.', $___filename));
+		$___extension = '.' . array_pop(explode('.', $___filename));
 		
-		if ($___extension == 'twig') {
+		if ($___extension == $this->twigOptions['extension']) {
 			try {
 				// load helpers
 				if ($this->helpers != false && $loadHelpers === true) {
@@ -145,9 +146,6 @@ class TwigView extends ThemeView {
 						$this->Twig->addGlobal($name, $helper);
 					}
 				}
-				
-				
-				
 				
 				// render
 				$templateName = $this->viewPath . DS . $___filename;
@@ -190,5 +188,53 @@ class TwigView extends ThemeView {
 			}
 		}
 		return $out;
+	}
+	
+	/**
+	 * Expose some selected Helper methods as filters
+	 * 
+	 * @return void
+	 * @author Kjell Bublitz
+	 */
+	private function _loadCustomFilters() {
+		
+		$this->twigLoadedFilters = array();
+		
+		if (in_array('time', $this->twigOptions['filters'])) {
+			$this->_loadFilterSet('time');
+			$this->Twig->addExtension(new Twig_Extension_Time);
+		}
+		if (in_array('i18n', $this->twigOptions['filters'])) {	
+			$this->_loadFilterSet('i18n');
+			$this->Twig->addExtension(new Twig_Extension_I18n);
+		}
+		if (in_array('number', $this->twigOptions['filters'])) {	
+			$this->_loadFilterSet('number');
+			$this->Twig->addExtension(new Twig_Extension_Number);
+		}
+		if (in_array('text', $this->twigOptions['filters'])) {		
+			$this->_loadFilterSet('text');
+			$this->Twig->addExtension(new Twig_Extension_Text);
+		}
+	}
+	
+	/**
+	 * Require filter set once, add filter name to self::twigLoadedFilters
+	 *
+	 * Triggers E_USER_ERROR if file not found.
+	 *
+	 * @param string $name Filename without extension
+	 * @return boolean
+	 * @author Kjell Bublitz
+	 */
+	private function _loadFilterSet($name) {
+		$filterFilePath = $this->twigFilterPath . DS . $name .'.php';
+		if (!is_file($filterFilePath)) {
+			trigger_error("Filter not found: {$name} (looked in: {$this->twigFilterPath})", E_USER_ERROR);
+			return false;
+		}
+		require_once $filterFilePath;
+		$this->twigLoadedFilters[] = $name;
+		return true;
 	}
 }
