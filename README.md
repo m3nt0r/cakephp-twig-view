@@ -1,11 +1,11 @@
-# Twig for CakePHP (v0.7 rock-lobster)
+# Twig for CakePHP (v0.7)
 
 This plugin for the CakePHP Framework allows you to use the Twig Templating Language.
 
 Apart from enabling you to use most of Twig's features the plugin is tightly integrated with 
 the CakePHP view renderer giving you full access to helpers, objects and elements.
 
-## New in this branch
+## New in this version
 
 - Complete rewrite
 - Latest Twig (v1.8.2 atm)
@@ -13,8 +13,7 @@ the CakePHP view renderer giving you full access to helpers, objects and element
 - Easy to install
 - Easy to migrate
 
-This is going to replace the v0.6 branch and the last version was 0.6.1. 
-Once this branch is complete, v0.7 will go into master.
+The previous version 0.6 can be found [here](https://github.com/m3nt0r/cakephp-twig-view/tree/twig.six "twig.six branch")
 
 ## Installation
 
