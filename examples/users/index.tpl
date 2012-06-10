@@ -1,37 +1,46 @@
-
+{# EXAMPLE: a basic index view, with paginator, i18n and router-links + variable #}
 <div class="container">
-	<h2>{{ 'Users' }}</h2>
+	
+	<h2>{{ 'Users'|trans }}</h2>
+	
 	<table class="table table-bordered">
 		<thead>
 			<tr>
-					<th>{{ paginator.sort('id') }}</th>
-					<th>{{ paginator.sort('email') }}</th>
-					<th>{{ paginator.sort('password') }}</th>
-					<th>{{ paginator.sort('created') }}</th>
-					<th>Actions</th>
-			</tr>
+				<th>{{ paginator.sort('id') }}</th>
+				<th>{{ paginator.sort('email') }}</th>
+				<th>{{ paginator.sort('created') }}</th>
+				<th>Actions</th>
+		  </tr>
 		</thead>
-		<tbody>
-			{% for row in users %}
-			<tr>
-				{# this is how we access results #}
-				<td>{{ row.User.id }}</td>
-				<td>{{ row.User.email }}</td>
-				<td>{{ row.User.password }}</td>
-		
-				{# this is how we can use helpers #}
-				<td>{{ time.niceShort(row.User.created) }}</td>
-		
-				{# this is how we have to write our url arrays #}
-				<td>{{ html.link('Edit User', {'controller': 'users', 'action': 'edit', 0: row.User.id}) }}</td>
-			</tr>
-			{% endfor %}
+	  <tbody>
+		{% if users is iterable %}
+			{% for row in users %} 
+			  <tr>
+					<td>{{ row.User.id }}</td>
+					<td>{{ row.User.email }}</td>
+					<td>{{ row.User.created }}</td>
+					<td>
+					{{ 
+						html.link('Edit User'|trans, {
+							'controller': 'users', 'action': 'edit', 0: row.User.id
+						})
+					}}
+					</td>
+			  </tr>
+		  {% endfor %}
+		{% else %}
+		    <tr>
+					<td colspan="4">
+						Sorry, no users found.
+					</td>
+				</tr>
+		{% endif %}
 		</tbody>
-	</table>
+  </table>
+	
 </div>
 
-{# this is how we import elements. #}
+{# EXAMPLE: how we include elements. #}
 <div class="container">
-	{% include 'my-element.tpl' %} 
+	{% include 'paginator.tpl' %} 
 </div>
-
