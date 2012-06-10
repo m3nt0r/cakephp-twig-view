@@ -164,10 +164,12 @@ class TwigView extends ThemeView {
 			$this->_triggerHelpers('beforeRender');
 			unset($name, $loadedHelpers, $helpers, $i, $helperNames, $helper);
 		}
-		
 		if ($___extension == $this->twigOptions['fileExtension']) {
 			ob_start();
 			try {
+				// get relative-to-loader path
+				$___relativeFn = basename(dirname($___viewFn)). DS . $___filename;
+			
 				// load helpers
 				if ($this->helpers != false && $loadHelpers === true) {
 					// Expose helpers the "cakephp 1.2" way: 
@@ -176,9 +178,7 @@ class TwigView extends ThemeView {
 					}
 				}
 				
-				// render
-				$templateName = basename(dirname($___viewFn)). DS . $___filename;
-				echo $this->Twig->render($templateName, $___dataForView);
+				echo $this->Twig->render($___relativeFn, $___dataForView);
 			} 
 			catch(Exception $e) {
 				echo '<pre><h2>Twig Error</h2>'.htmlentities($e->getMessage()).'</pre>';
