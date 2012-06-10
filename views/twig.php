@@ -177,7 +177,7 @@ class TwigView extends ThemeView {
 				}
 				
 				// render
-				$templateName = $this->viewPath . DS . $___filename;
+				$templateName = basename(dirname($___viewFn)). DS . $___filename;
 				echo $this->Twig->render($templateName, $___dataForView);
 			} 
 			catch(Exception $e) {
