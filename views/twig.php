@@ -109,8 +109,11 @@ class TwigView extends ThemeView {
 	 * @access protected
 	 */
 	function _render($___viewFn, $___dataForView, $loadHelpers = true, $cached = false) {
-		$loadedHelpers = array();
 		
+		$___filename = basename($___viewFn);
+		$___extension = '.' . array_pop(explode('.', $___filename));
+				
+		$loadedHelpers = array();
 		if ($this->helpers != false && $loadHelpers === true) {
 			$loadedHelpers = $this->_loadHelpers($loadedHelpers, $this->helpers);
 			$helpers = array_keys($loadedHelpers);
@@ -130,14 +133,8 @@ class TwigView extends ThemeView {
 			unset($name, $loadedHelpers, $helpers, $i, $helperNames, $helper);
 		}
 		
-		extract($___dataForView, EXTR_SKIP);
-		ob_start();
-		
-		$___viewFolder = dirname($___viewFn);
-		$___filename = basename($___viewFn);
-		$___extension = '.' . array_pop(explode('.', $___filename));
-		
 		if ($___extension == $this->twigOptions['extension']) {
+			ob_start();
 			try {
 				// load helpers
 				if ($this->helpers != false && $loadHelpers === true) {
@@ -154,8 +151,9 @@ class TwigView extends ThemeView {
 			catch(Exception $e) {
 				echo '<pre><h2>Twig Error</h2>'.htmlentities($e->getMessage()).'</pre>';
 			}
-			
 		} else {
+			extract($___dataForView, EXTR_SKIP);
+			ob_start();
 			if ((Configure::read() > 0)) {
 				include ($___viewFn);
 			} else {
