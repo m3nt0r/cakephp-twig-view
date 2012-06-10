@@ -125,6 +125,63 @@ A more complex example, FormHelper inputs:
       })
     }}
 
+## CakePHP-powered Filters
+
+The View class adds some sugar to templates by exposing some Helper methods through filters. It  features the most common and useful ones. If you think i've left out an important method, geel free to extend the filter (see ```./extensions``` folder) and send me a pull request. 
+
+By default all filter sets (helpers) are enabled. Currently available are:
+
+- time
+- number
+- text
+- i18n
+
+You can disable any of them by setting ```Configure::write('TwigView.extensions')``` with an list of extensions  
+you want (lowercase, like above). If you want to disabled them all just set an empty array or change each 
+name to something like 'time_disabled' as the load condition is simply using in_array.
+
+### Examples
+
+You can find usage examples for all custom filters inside the ```examples``` directory. 
+
+- translation.tpl
+- filters.tpl
+
 ## Caching
 
 The interal Twig caching engine has been disabled in favor of CakePHPs own view caching mechanism.
+
+## Contributing
+
+I've added some utitlity methods so i can bring in any Helper and associated Extensions/Filters as quickly as possible. 
+
+If you want to contribute some filters i suggest to look inside the ```extensions``` directory and copy one of the 
+existing files and simply rename methods and class names to your needs.
+
+You are not limited to filters, by the way. Read the Twig Documentation [about extending](http://twig.sensiolabs.org/doc/advanced.html#creating-an-extension). The way i extend can also
+be used to add TokenParsers, Functions, Operators, Globals and more.
+
+### Basic Workflow
+
+Extend ```TwigView_Extension``` for your method collection. There is not much code in it, but we are at an early
+stage and inheriting is always a good idea when extending a package.
+
+Helpers can used like so:
+
+    self::helperObject('YourHelper')->something()
+
+The first time you do this the ```YourHelper``` object is stored in the [ClassRegistry](http://api.cakephp.org/class/class-registry "CakePHP API") 
+so we don't spam-create a new Helper instance each and every filter call (inside a foreach table loop, for example).
+
+Once you are done coding you need to add a call to ```TwigView::registerExtension()``` to your extension file:
+
+    TwigView::registerExtension(__FILE__, 'Your_Helper_Twig_Extension'); // extending Twig_Extension
+
+Replace ```Your_Helper_Twig_Extension``` with your extension class name. This will simply tell ```TwigView``` what class 
+to use when calling ```TwigEnvironment::addExtension()``` inside the construct
+
+That's all! And please use tabs, not spaces :)
+
+
+
+

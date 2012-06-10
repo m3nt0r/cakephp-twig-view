@@ -24,12 +24,21 @@ Twig_Autoloader::register();
 /**
  * Inherit for Filter Extensions
  *
- * @package default
+ * @package app.views.twig
+ * @subpackage app.views.twig-filters
  * @author Kjell Bublitz
  */
-abstract class TwigView_Filter {
+abstract class TwigView_Extension {
+	
+	/**
+	 * Instance and register any given class
+	 *	
+	 * @author Kjell Bublitz
+	 * @param string $className 
+	 * @return object
+	 */
 	protected static function helperObject($className) {
-		$registryKey = 'TwigView_Filter'.$className;
+		$registryKey = 'TwigView_Extension_'.$className;
 		$object = ClassRegistry::getObject($registryKey);	
 		if (is_a($object, $className)) return $object;
 		$object = new $className();
@@ -48,10 +57,28 @@ abstract class TwigView_Filter {
  */
 class TwigView extends ThemeView {
 	
+	/**
+	 * Default Options
+	 *
+	 * @var array
+	 */
 	public $twigOptions = array(
-		'filters' => array('i18n','number','text','time'),
-		'extension' => '.twig'
+		'fileExtension' => '.twig',
+		'extensions' => array(
+			'i18n',
+			'number',
+			'text',
+			'time'
+		)
 	);
+	
+	/**
+	 * filename => className
+	 * 
+	 * @see TwigView::registerExtension()
+	 * @var array
+	 */
+	static private $__extensionExports = array();
 	
 	/**
 	 * Constructor
@@ -63,7 +90,7 @@ class TwigView extends ThemeView {
 	function __construct(&$controller, $register = true) {
 		parent::__construct($controller, $register);
 		$this->twigPluginPath = dirname(dirname(__FILE__)) . DS;
-		$this->twigFilterPath = $this->twigPluginPath . 'filters';
+		$this->twigExtensionPath = $this->twigPluginPath . 'extensions';
 		
 		// import plugin options
 		$appOptions = Configure::read('TwigView');
@@ -72,7 +99,7 @@ class TwigView extends ThemeView {
 		}
 		
 		// set preferred extension
-		$this->ext = $this->twigOptions['extension'];
+		$this->ext = $this->twigOptions['fileExtension'];
 		
 		// Setup template paths
 		$pluginFolder = Inflector::underscore($this->plugin);
@@ -93,8 +120,13 @@ class TwigView extends ThemeView {
 		$escaper = new Twig_Extension_Escaper(false);
 		$this->Twig->addExtension($escaper);
 		
-		// Add TwigView CakePHP filters
-		$this->_loadCustomFilters();
+		// Add custom TwigView Extensions
+		$this->twigLoadedExtensions = array();
+		foreach ($this->twigOptions['extensions'] as $extensionName) {
+			if ($extensionClassName = $this->_loadTwigExtension($extensionName)) {
+				$this->Twig->addExtension(new $extensionClassName);
+			}
+		}
 	}
 	
 	/**
@@ -133,7 +165,7 @@ class TwigView extends ThemeView {
 			unset($name, $loadedHelpers, $helpers, $i, $helperNames, $helper);
 		}
 		
-		if ($___extension == $this->twigOptions['extension']) {
+		if ($___extension == $this->twigOptions['fileExtension']) {
 			ob_start();
 			try {
 				// load helpers
@@ -188,34 +220,7 @@ class TwigView extends ThemeView {
 		return $out;
 	}
 	
-	/**
-	 * Expose some selected Helper methods as filters
-	 * 
-	 * @return void
-	 * @author Kjell Bublitz
-	 */
-	private function _loadCustomFilters() {
-		
-		$this->twigLoadedFilters = array();
-		
-		if (in_array('time', $this->twigOptions['filters'])) {
-			$this->_loadFilterSet('time');
-			$this->Twig->addExtension(new Twig_Extension_Time);
-		}
-		if (in_array('i18n', $this->twigOptions['filters'])) {	
-			$this->_loadFilterSet('i18n');
-			$this->Twig->addExtension(new Twig_Extension_I18n);
-		}
-		if (in_array('number', $this->twigOptions['filters'])) {	
-			$this->_loadFilterSet('number');
-			$this->Twig->addExtension(new Twig_Extension_Number);
-		}
-		if (in_array('text', $this->twigOptions['filters'])) {		
-			$this->_loadFilterSet('text');
-			$this->Twig->addExtension(new Twig_Extension_Text);
-		}
-	}
-	
+
 	/**
 	 * Require filter set once, add filter name to self::twigLoadedFilters
 	 *
@@ -225,14 +230,41 @@ class TwigView extends ThemeView {
 	 * @return boolean
 	 * @author Kjell Bublitz
 	 */
-	private function _loadFilterSet($name) {
-		$filterFilePath = $this->twigFilterPath . DS . $name .'.php';
-		if (!is_file($filterFilePath)) {
-			trigger_error("Filter not found: {$name} (looked in: {$this->twigFilterPath})", E_USER_ERROR);
+	protected function _loadTwigExtension($extensionName) {
+		if (in_array($extensionName, $this->twigLoadedExtensions)) {
+			return false; // already loaded
+		}
+		
+		$filename = $extensionName .'.php';
+		$filepath = $this->twigExtensionPath . DS . $filename;
+		
+		if (!is_file($filepath)) {
+			trigger_error("TwigExtension file not found: {$extensionName} (looked in: {$this->twigExtensionPath})", E_USER_ERROR);
 			return false;
 		}
-		require_once $filterFilePath;
-		$this->twigLoadedFilters[] = $name;
-		return true;
+		require_once $filepath;
+		
+		if (empty(self::$__extensionExports[$filename])) {
+			trigger_error("TwigExtension '{$extensionName}' does not export a extension class (did you call registerExtension?).", E_USER_ERROR);
+			return false;
+		}
+		
+		$this->twigLoadedExtensions[] = $extensionName;
+		return self::$__extensionExports[$filename];
+	}
+	
+	/**
+	 * Register Extension Class Name for loading
+	 *
+	 * Must be called from inside the required extension file
+	 * and provide the contained class name
+	 *
+	 * @param string $file __FILE__
+	 * @param string $extensionClassName 'YourTwigExtension'
+	 * @return void
+	 * @author Kjell Bublitz
+	 */
+	static public function registerExtension($file, $extensionClassName) {
+		self::$__extensionExports[basename($file)] = $extensionClassName;
 	}
 }
