@@ -1,5 +1,17 @@
+{#
+This is the example data from "default.po" and "users.po"
 
-{# this is how we translate using cakes i18n. #}
+msgid "Words"
+msgstr "Wörter"
+
+msgid "Word"
+msgid_plural "Words"
+msgstr[0] "Wort"
+msgstr[1] "Wörter"
+
+#}
+
+
 <div class="container">
 	<h2>Translation</h2>
 	
