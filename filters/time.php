@@ -31,6 +31,7 @@ class Twig_Extension_Time extends Twig_Extension {
 			'gmt' => new Twig_Filter_Function('TwigView_Filter_Time::gmt'),
 			'rssTime' => new Twig_Filter_Function('TwigView_Filter_Time::toRSS'),
 			'atomTime' => new Twig_Filter_Function('TwigView_Filter_Time::toAtom'),
+			'unixTime' => new Twig_Filter_Function('TwigView_Filter_Time::toUnix'),
 		);
 	}
 }
@@ -51,7 +52,8 @@ class TwigView_Filter_Time extends TwigView_Filter {
 	 * - `end` => The end of relative time telling
 	 * - `userOffset` => Users offset from GMT (in hours)
 	 *
-	 * @param string $var 
+	 * @param string $var UNIX timestamp or a valid strtotime() date string
+	 * @param array $options (optional)
 	 * @return void
 	 * @author Kjell Bublitz
 	 */
@@ -60,10 +62,23 @@ class TwigView_Filter_Time extends TwigView_Filter {
 	}
 		
 	/**
+	 * TimeHelper::toUnix
+	 *
+	 * @param string $var Valid strtotime() date string
+	 * @param int $userOffset User's offset from GMT (in hours)
+	 * @return integer UNIX timestamp
+	 * @author Kjell Bublitz
+	 */
+	function toUnix($var, $userOffset = null) {
+		return self::helperObject('TimeHelper')->toUnix($var, $userOffset);
+	}
+	
+	/**
 	 * TimeHelper::toRSS
 	 *
 	 * @param string $var UNIX timestamp or a valid strtotime() date string
-	 * @return void Date formatted for RSS feeds
+	 * @param int $userOffset User's offset from GMT (in hours)
+	 * @return string Date formatted for RSS feeds
 	 * @author Kjell Bublitz
 	 */
 	function toRSS($var, $userOffset = null) {
@@ -74,7 +89,8 @@ class TwigView_Filter_Time extends TwigView_Filter {
 	 * TimeHelper::toAtom
 	 *
 	 * @param string $var UNIX timestamp or a valid strtotime() date string
-	 * @return void Date formatted for Atom RSS feeds
+	 * @param int $userOffset User's offset from GMT (in hours)
+	 * @return string Date formatted for Atom RSS feeds
 	 * @author Kjell Bublitz
 	 */
 	function toAtom($var, $userOffset = null) {
@@ -85,7 +101,7 @@ class TwigView_Filter_Time extends TwigView_Filter {
 	 * TimeHelper::gmt
 	 *
 	 * @param string $var UNIX timestamp or a valid strtotime() date string
-	 * @return void
+	 * @return integer
 	 * @author Kjell Bublitz
 	 */
 	function gmt($var) {
@@ -95,8 +111,9 @@ class TwigView_Filter_Time extends TwigView_Filter {
 	/**
 	 * TimeHelper::nice
 	 *
-	 * @param string $var 
-	 * @return void
+	 * @param string $var UNIX timestamp or a valid strtotime() date string
+	 * @param int $userOffset User's offset from GMT (in hours)
+	 * @return string
 	 * @author Kjell Bublitz
 	 */
 	function nice($var, $userOffset = null) {
@@ -106,8 +123,9 @@ class TwigView_Filter_Time extends TwigView_Filter {
 	/**
 	 * TimeHelper::niceShort
 	 *
-	 * @param string $var 
-	 * @return void
+	 * @param string $var UNIX timestamp or a valid strtotime() date string
+	 * @param int $userOffset User's offset from GMT (in hours)
+	 * @return string
 	 * @author Kjell Bublitz
 	 */
 	function niceShort($var, $userOffset = null) {
