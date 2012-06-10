@@ -1,193 +1,151 @@
 <?php
-/**
- * TwigView for CakePHP
- *
- * About Twig
- *  http://www.twig-project.org/
- *
- * @version 0.5
- * @package app.views
- * @subpackage app.views.twig
- * @author Kjell Bublitz <m3nt0r.de@gmail.com>
- * @link http://github.com/m3nt0r My GitHub
- * @link http://twitter.com/m3nt0r My Twitter
- * @license MIT License
- */
-if (!defined('TWIG_VIEW_CACHE')) {
-	define('TWIG_VIEW_CACHE', APP.'plugins'.DS.'twig_view'.DS.'tmp'.DS.'views');
-}
-
-// Load Twig Lib and start auto loader
-App::import('Vendor', 'TwigView.TwigAutoloader', array(
-	'file' => 'Twig'.DS.'lib'.DS.'Twig'.DS.'Autoloader.php'
-));
-Twig_Autoloader::register();
-
-// overwrite twig classes (thanks to autoload, no problem)
-App::import('Lib', 'TwigView.TransNode');
-App::import('Lib', 'TwigView.TokenparserTrans');
-
-// my custom cake extensions
-App::import('Lib', 'TwigView.ExtensionI18n');
-App::import('Lib', 'TwigView.ExtensionAgo');
-App::import('Lib', 'TwigView.ExtensionBasic');
-App::import('Lib', 'TwigView.ExtensionNumbers');
-
-// get twig core extension (overwrite trans block)
-App::import('Lib', 'TwigView.CoreExtension');
-
+define('TWIG_VERSION', '1.8.2');
 /**
  * TwigView for CakePHP
  * 
- * @version 0.5
- * @author Kjell Bublitz <m3nt0r.de@gmail.com>
- * @link http://github.com/m3nt0r/cakephp-twig-view GitHub
+ * @version 0.7.rock-lobster
  * @package app.views
  * @subpackage app.views.twig
+ * @author Kjell Bublitz <m3nt0r.de@gmail.com>
+ * @license MIT License
+ *
+ * Rewriting is fun. Simplicity is bliss.
+ *
+ * @link http:://www.twig-project.org Twig Homepage
+ * @link http://github.com/m3nt0r My GitHub
+ * @link http://twitter.com/m3nt0r My Twitter
  */
-class TwigView extends View {
-	
-	public $ext = '.tpl';
+App::import('Core', 'Theme');
+App::import('Vendors', 'Twig.Twig_Environment', array(
+	'file' => 'twig-'.TWIG_VERSION.DS.'lib'.DS.'Twig'.DS.'Autoloader.php'
+));
+Twig_Autoloader::register();
+
+/**
+ * Inherit for Filter Extensions
+ *
+ * @package app.views.twig
+ * @subpackage app.views.twig-filters
+ * @author Kjell Bublitz
+ */
+abstract class TwigView_Extension {
 	
 	/**
-	 * Twig Environment Instance
-	 * @var Twig_Environment
+	 * Instance and register any given class
+	 *	
+	 * @author Kjell Bublitz
+	 * @param string $className 
+	 * @return object
 	 */
-	public $Twig;
+	protected static function helperObject($className) {
+		$registryKey = 'TwigView_Extension_'.$className;
+		$object = ClassRegistry::getObject($registryKey);	
+		if (is_a($object, $className)) return $object;
+		$object = new $className();
+		ClassRegistry::addObject($registryKey, $object);	
+		return $object;
+	}
+}
+
+
+/**
+ * TwigView Class 
+ *
+ * @package app.views
+ * @subpackage app.views.twig
+ * @author Kjell Bublitz <m3nt0r.de@gmail.com>
+ */
+class TwigView extends ThemeView {
 	
 	/**
-	 * Collection of paths. 
-	 * These are stripped from $___viewFn.
-	 * @todo overwrite getFilename()
+	 * Default Options
+	 *
+	 * @var array
 	 */
-	public $templatePaths = array();
+	public $twigOptions = array(
+		'fileExtension' => '.twig',
+		'extensions' => array(
+			'i18n',
+			'number',
+			'text',
+			'time'
+		)
+	);
 	
 	/**
-	 * Load Twig
+	 * filename => className
+	 * 
+	 * @see TwigView::registerExtension()
+	 * @var array
+	 */
+	static private $__extensionExports = array();
+	
+	/**
+	 * Constructor
+	 *
+	 * @param Controller $controller A controller object to pull View::__passedArgs from.
+	 * @param boolean $register Should the View instance be registered in the ClassRegistry
+	 * @return View
 	 */
 	function __construct(&$controller, $register = true) {
-		
-		// just collecting for str_replace
-		$this->templatePaths = array(
-			APP.'views',
-			ROOT.DS.'cake'.DS.'libs'.DS.'view'
-		);
-		
-		// plugin support
-		if ($controller->plugin) {
-			$pluginViewPath = APP.'plugins'.DS.$controller->plugin.DS.'views';
-			array_unshift($this->templatePaths, $pluginViewPath); // look here first
-		}
-		
-		// we always look in APP, this includes error templates.
-		$loader = new Twig_Loader_Filesystem($this->templatePaths);
-		
-		// setup twig and go.
-		$this->Twig = new Twig_Environment($loader, array(
-			'cache' => TWIG_VIEW_CACHE,
-			'charset' => strtolower(Configure::read('App.encoding')),
-			'auto_reload' => (bool) Configure::read('debug'),
-			'autoescape' => false
-		));;
-		
-		// overwrite some stuff
-		$this->Twig->addExtension(new CoreExtension);
-		
-		// activate |trans filter
-		$this->Twig->addExtension(new Twig_Extension_I18n);
-		
-		// activate |ago filter
-		$this->Twig->addExtension(new Twig_Extension_TimeAgo);
-		
-		// activate basic filter
-		$this->Twig->addExtension(new Twig_Extension_Basic);
-		
-		// activate number filters
-		$this->Twig->addExtension(new Twig_Extension_Number);
-		
 		parent::__construct($controller, $register);
+		$this->twigPluginPath = dirname(dirname(__FILE__)) . DS;
+		$this->twigExtensionPath = $this->twigPluginPath . 'extensions';
 		
-		if (isset($controller->theme))
-			$this->theme =& $controller->theme;
-			
-		$this->ext = '.tpl';
-	}
-	
-	/**
-	 * Feature Detection
-	 */
-	private function isCake2() {
-		return (isset($this->Helpers) && method_exists($this->Helpers, 'attached'));
-	}
-	
-	/**
-	 * Render Proxy
-	 */
-	function _render($___viewFn, $___dataForView = array(), $loadHelpers = true) {
-		if ($this->isCake2()) {
-			return $this->_render2x($___viewFn, $___dataForView);
-	 	} else {
-			return $this->_render1x($___viewFn, $___dataForView, $loadHelpers = true);
+		// import plugin options
+		$appOptions = Configure::read('TwigView');
+		if (!empty($appOptions) && is_array($appOptions)) {
+			$this->twigOptions = array_merge($this->twigOptions, $twigOptions);
+		}
+		
+		// set preferred extension
+		$this->ext = $this->twigOptions['fileExtension'];
+		
+		// Setup template paths
+		$pluginFolder = Inflector::underscore($this->plugin);
+		$paths = $this->_paths($pluginFolder);
+		foreach ($paths as $path) {
+			// Make "{% include 'test.ctp' %}" a replacement for self::element()
+			$paths[] = $path . 'elements' . DS;
+		}
+		
+		// Setup Twig Environment
+		$loader = new Twig_Loader_Filesystem($paths);
+		$this->Twig = new Twig_Environment($loader, array(
+			'cache' => false, // use cakephp cache
+			'debug' => (Configure::read() > 0),
+		));
+		
+		// Do not escape return values (from helpers)
+		$escaper = new Twig_Extension_Escaper(false);
+		$this->Twig->addExtension($escaper);
+		
+		// Add custom TwigView Extensions
+		$this->twigLoadedExtensions = array();
+		foreach ($this->twigOptions['extensions'] as $extensionName) {
+			if ($extensionClassName = $this->_loadTwigExtension($extensionName)) {
+				$this->Twig->addExtension(new $extensionClassName);
+			}
 		}
 	}
 	
 	/**
-	 * Render: 2.0
+	 * Renders and returns output for given view filename with its
+	 * array of data.
 	 *
-	 * Thanks to BigClick
-	 * @link https://github.com/bigclick/cakephp-twig-view/commit/2e3e0aa65d3ac6e492f441cd6196c524087c5e95
+	 * @param string $___viewFn Filename of the view
+	 * @param array $___dataForView Data to include in rendered view
+	 * @param boolean $loadHelpers Boolean to indicate that helpers should be loaded.
+	 * @param boolean $cached Whether or not to trigger the creation of a cache file.
+	 * @return string Rendered output
+	 * @access protected
 	 */
-	protected function _render2x($___viewFn, $___dataForView = array()) {
+	function _render($___viewFn, $___dataForView, $loadHelpers = true, $cached = false) {
 		
-		$isCtpFile = (substr($___viewFn, -3) == 'ctp');
-		
-		if (empty($___dataForView)) {
-			$___dataForView = $this->viewVars;
-		}
+		$___filename = basename($___viewFn);
+		$___extension = '.' . array_pop(explode('.', $___filename));
 				
-		if ($isCtpFile) {
-			$out = parent::_render($___viewFn, $___dataForView);
-		} else {
-			ob_start();
-			// Setup the helpers from the new Helper Collection
-			$helpers = array();
-			$loaded_helpers = $this->Helpers->attached();
-			foreach($loaded_helpers as $helper) {
-				$name = Inflector::variable($helper);
-				$helpers[$name] =& $this->loadHelper($helper);
-			}
-
-			$data = array_merge($___dataForView, $helpers);	
-			$data['_view'] = $this;
-			
-			try {
-				$relativeFn = str_replace($this->templatePaths, '', $___viewFn);
-				$template = $this->Twig->loadTemplate($relativeFn);
-				echo $template->render($data);
-			} 
-			catch (Twig_SyntaxError $e) {
-				$this->displaySyntaxException($e);
-			} catch (Twig_RuntimeError $e) {
-				$this->displayRuntimeException($e);
-			} catch (RuntimeException $e) {
-				$this->displayRuntimeException($e);
-			} catch (Twig_Error $e) {
-				$this->displayException($e, 'Error');
-			}
-			$out = ob_get_clean();
-			
-		}
-		
-		return $out;
-	}
-	
-	
-	/**
-	 * Render: 1.2+
-	 */
-	function _render1x($___viewFn, $___dataForView, $loadHelpers = true) {
 		$loadedHelpers = array();
-		
 		if ($this->helpers != false && $loadHelpers === true) {
 			$loadedHelpers = $this->_loadHelpers($loadedHelpers, $this->helpers);
 			$helpers = array_keys($loadedHelpers);
@@ -204,169 +162,109 @@ class TwigView extends View {
 				$this->{$helpers[$i]} =& $helper;
 			}
 			$this->_triggerHelpers('beforeRender');
-			unset($name, $loadedHelpers, $helpers, $i, $helperNames);
+			unset($name, $loadedHelpers, $helpers, $i, $helperNames, $helper);
 		}
 		
-		$isCtpFile = (substr($___viewFn, -3) == 'ctp');
-		
-		ob_start();
-		
-		if ($isCtpFile) {
+		if ($___extension == $this->twigOptions['fileExtension']) {
+			ob_start();
+			try {
+				// load helpers
+				if ($this->helpers != false && $loadHelpers === true) {
+					// Expose helpers the "cakephp 1.2" way: 
+					foreach($this->loaded as $name => $helper) {
+						$this->Twig->addGlobal($name, $helper);
+					}
+				}
+				
+				// render
+				$templateName = $this->viewPath . DS . $___filename;
+				echo $this->Twig->render($templateName, $___dataForView);
+			} 
+			catch(Exception $e) {
+				echo '<pre><h2>Twig Error</h2>'.htmlentities($e->getMessage()).'</pre>';
+			}
+		} else {
 			extract($___dataForView, EXTR_SKIP);
-			if (Configure::read() > 0) {
+			ob_start();
+			if ((Configure::read() > 0)) {
 				include ($___viewFn);
 			} else {
 				@include ($___viewFn);
 			}
-		} else {			
-			$data = array_merge($___dataForView, $this->loaded);
-			$data['_view'] = $this;
-			try {
-				$relativeFn = str_replace($this->templatePaths, '', $___viewFn);
-				$template = $this->Twig->loadTemplate($relativeFn);
-				echo $template->render($data);
-			} 
-			catch (Twig_SyntaxError $e) {
-				$this->displaySyntaxException($e);
-			} catch (Twig_RuntimeError $e) {
-				$this->displayRuntimeException($e);
-			} catch (RuntimeException $e) {
-				$this->displayRuntimeException($e);
-			} catch (Twig_Error $e) {
-				$this->displayException($e, 'Error');
-			}
 		}
+		
 		if ($loadHelpers === true) {
 			$this->_triggerHelpers('afterRender');
 		}
-		
+
 		$out = ob_get_clean();
-		
-		if ($isCtpFile) {
-			$caching = (
-				isset($this->loaded['cache']) &&
-				(($this->cacheAction != false)) && (Configure::read('Cache.check') === true)
-			);
-			if ($caching) {
-				if (is_a($this->loaded['cache'], 'CacheHelper')) {
-					$cache =& $this->loaded['cache'];
-					$cache->base = $this->base;
-					$cache->here = $this->here;
-					$cache->helpers = $this->helpers;
-					$cache->action = $this->action;
-					$cache->controllerName = $this->name;
-					$cache->layout = $this->layout;
-					$cache->cacheAction = $this->cacheAction;
-					$cache->cache($___viewFn, $out, $cached);
-				}
+		$caching = (
+			isset($this->loaded['cache']) &&
+			(($this->cacheAction != false)) && (Configure::read('Cache.check') === true)
+		);
+
+		if ($caching) {
+			if (is_a($this->loaded['cache'], 'CacheHelper')) {
+				$cache =& $this->loaded['cache'];
+				$cache->base = $this->base;
+				$cache->here = $this->here;
+				$cache->helpers = $this->helpers;
+				$cache->action = $this->action;
+				$cache->controllerName = $this->name;
+				$cache->layout = $this->layout;
+				$cache->cacheAction = $this->cacheAction;
+				$cache->viewVars = $this->viewVars;
+				$out = $cache->cache($___viewFn, $out, $cached);
 			}
 		}
 		return $out;
 	}
 	
+
 	/**
-	 * Element: 1.2+
+	 * Require filter set once, add filter name to self::twigLoadedFilters
+	 *
+	 * Triggers E_USER_ERROR if file not found.
+	 *
+	 * @param string $name Filename without extension
+	 * @return boolean
+	 * @author Kjell Bublitz
 	 */
-	function element1x($name, $params = array(), $loadHelpers = false) {
-		// render and revert to using .tpl
-		$return = parent::element($name, $params, $loadHelpers);
-		$this->ext = '.tpl';
-		return $return;
+	protected function _loadTwigExtension($extensionName) {
+		if (in_array($extensionName, $this->twigLoadedExtensions)) {
+			return false; // already loaded
+		}
+		
+		$filename = $extensionName .'.php';
+		$filepath = $this->twigExtensionPath . DS . $filename;
+		
+		if (!is_file($filepath)) {
+			trigger_error("TwigExtension file not found: {$extensionName} (looked in: {$this->twigExtensionPath})", E_USER_ERROR);
+			return false;
+		}
+		require_once $filepath;
+		
+		if (empty(self::$__extensionExports[$filename])) {
+			trigger_error("TwigExtension '{$extensionName}' does not export a extension class (did you call registerExtension?).", E_USER_ERROR);
+			return false;
+		}
+		
+		$this->twigLoadedExtensions[] = $extensionName;
+		return self::$__extensionExports[$filename];
 	}
 	
 	/**
-	 * Element: 2.0
-	 */
-	function element2x($name, $params = array(), $callbacks = false) {
-		// render and revert to using .tpl
-		$return = parent::element($name, $params, $callbacks);
-		$this->ext = '.tpl';
-		return $return;
-	}
-	
-	/**
-	 * Element Proxy
+	 * Register Extension Class Name for loading
 	 *
-	 * Support for cake 2.0
-	 */
-	public function element($name, $params = array(), $callbacks = false) {
-		// email hack
-		if (substr($name, 0, 5) != 'email') {
-			$this->ext = '.ctp'; // not an email, use .ctp
-		}
-		
-		if ($this->isCake2()) {
-			return $this->element2x($name, $params, $callbacks);
-		} else {
-			return $this->element1x($name, $params, $callbacks);
-		}
-	}
-
-	/**
-	 * Return all possible paths to find view files in order
-	 * 
-	 * Added to TwigView
-	 *   - super hard copy-paste job from /cake/libs/view/theme.php :)
-	 *   - added "isset" test: fallback to default behavior.
+	 * Must be called from inside the required extension file
+	 * and provide the contained class name
 	 *
-	 * @param string $plugin The name of the plugin views are being found for.
-	 * @param boolean $cached Set to true to force dir scan.
-	 * @return array paths
-	 * @access protected
-	 * @todo Make theme path building respect $cached parameter.
+	 * @param string $file __FILE__
+	 * @param string $extensionClassName 'YourTwigExtension'
+	 * @return void
+	 * @author Kjell Bublitz
 	 */
-	function _paths($plugin = null, $cached = true) {
-		if (!isset($this->theme)) {
-			return parent::_paths($plugin, $cached);
-		}
-		
-		$paths = parent::_paths($plugin, $cached);
-		$themePaths = array();
-
-		if (!empty($this->theme)) {
-			$count = count($paths);
-			for ($i = 0; $i < $count; $i++) {
-				if (strpos($paths[$i], DS . 'plugins' . DS) === false
-					&& strpos($paths[$i], DS . 'libs' . DS . 'view') === false) {
-						if ($plugin) {
-							$themePaths[] = $paths[$i] . 'themed'. DS . $this->theme . DS . 'plugins' . DS . $plugin . DS;
-						}
-						$themePaths[] = $paths[$i] . 'themed'. DS . $this->theme . DS;
-					}
-			}
-			$paths = array_merge($themePaths, $paths);
-		}
-		return $paths;
-	}
-
-
-	/**
-	 * I know. There are probably a million better ways, but this works too.
-	 */
-	private function _exception($type, $content, $message = null) {
-		if (Configure::read() > 0) {
-			$html = '<html><head><title>'.$type.'.</title></head><body style="font-family:sans-serif">';
-			$html.= '<div style="width:70%;margin:20px auto;border:1px solid #aaa;text-align:center;padding: 10px">';
-			$html.= '<h1 style="color:#f06">Twig :: '.$type.'</h1>'.$content.'</div></body></html>';
-			return $html;
-		} else {
-			$this->log('[TwigView] '.$type.': '.$message);
-			return '';
-		}
-	}
-	private function displaySyntaxException($e) {
-		$content = '<h3>'.$e->getFilename().', Line: '.$e->getLine().'</h3>';
-		$content.= '<p class="error">'.$e->getMessage().'</p>';
-		echo $this->_exception('Syntax Error', $content, $e->getMessage());
-	}
-	private function displayRuntimeException($e) {
-		$content = '<h3>'.$e->getMessage().'</h3>';
-		$content.= '<p class="error">'.$e->getFile().', Line: '.$e->getLine().'</p>';
-		echo $this->_exception('Runtime Error', $content, $e->getMessage());
-	}
-	private function displayException($e) {
-		$content = '<h3>'.$e->getMessage().'</h3>';
-		$content.= '<p class="error">'.$e->getFile().', Line: '.$e->getLine().'</p>';
-		echo $this->_exception('Error', $content, $e->getMessage());
+	static public function registerExtension($file, $extensionClassName) {
+		self::$__extensionExports[basename($file)] = $extensionClassName;
 	}
 }
