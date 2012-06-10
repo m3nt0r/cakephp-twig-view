@@ -23,6 +23,36 @@ App::import('Vendors', 'Twig.Twig_Environment', array(
 Twig_Autoloader::register();
 
 /**
+ * CakePHP i18n Support
+ *
+ * @param string $text 
+ * @param string $param1 (plural, domain or empty(default))
+ * @param mixed $param2
+ * @param mixed $param3 
+ * @return string
+ * @author Kjell Bublitz
+ */
+function transFilter($text, $param1=null, $param2=null, $param3=null) {
+	
+	// 'Word'|trans('Words', 'users', 5)
+	if (is_numeric($param3)) {
+		return __dn($domain=$param2, $singular=$text, $plural=$param1, $count=$param3, true);
+	}
+	
+	// 'Word'|trans('Words', 5)
+	if (is_numeric($param2)) {
+		return __n($singular=$text, $plural=$param1, $count=$param2, true);
+	}
+	
+	// 'Word'|trans('users')
+	if (!empty($param1)) {
+		return __d($domain=$param1, $text, true);
+	}
+	
+	return __($text, true);
+}
+
+/**
  * TwigView Class 
  *
  * @package app.views
@@ -54,6 +84,9 @@ class TwigView extends ThemeView {
 			'cache' => false, // use cakephp cache
 			'debug' => (Configure::read() > 0),
 		));
+		
+		// i18n
+		$this->Twig->addFilter('trans', new Twig_Filter_Function('transFilter'));
 		
 		// Do not escape return values (from helpers)
 		$escaper = new Twig_Extension_Escaper(false);
@@ -112,6 +145,9 @@ class TwigView extends ThemeView {
 						$this->Twig->addGlobal($name, $helper);
 					}
 				}
+				
+				
+				
 				
 				// render
 				$templateName = $this->viewPath . DS . $___filename;
