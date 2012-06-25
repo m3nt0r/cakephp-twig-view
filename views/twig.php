@@ -1,5 +1,5 @@
 <?php
-define('TWIG_VERSION', '1.8.2');
+define('TWIG_VERSION', '1.8.3');
 /**
  * TwigView for CakePHP
  * 
