@@ -10,7 +10,7 @@ the CakePHP view renderer giving you full access to helpers, objects and element
 ## New in this version
 
 - Complete rewrite
-- Latest Twig (v1.8.2 atm)
+- Latest Twig (v1.8.3 atm)
 - Easy to upgrade
 - Easy to install
 - Easy to migrate
