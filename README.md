@@ -131,7 +131,7 @@ A more complex example, FormHelper inputs:
 
 ## CakePHP-powered Filters
 
-The View class adds some sugar to templates by exposing some Helper methods through filters. It  features the most common and useful ones. If you think i've left out an important method, geel free to extend the filter (see ```./extensions``` folder) and send me a pull request. 
+The View class adds some sugar to templates by exposing some Helper methods through filters. It  features the most common and useful ones. If you think i've left out an important method, feel free to extend the filter (see ```./extensions``` folder) and send me a pull request. 
 
 By default all filter sets (helpers) are enabled. Currently available are:
 
