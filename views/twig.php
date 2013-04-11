@@ -1,23 +1,34 @@
 <?php
-define('TWIG_VERSION', '1.8.3');
 /**
  * TwigView for CakePHP
  * 
- * @version 0.7.rock-lobster
+ * @version 0.7.1
  * @package app.views
  * @subpackage app.views.twig
  * @author Kjell Bublitz <m3nt0r.de@gmail.com>
  * @license MIT License
  *
- * Rewriting is fun. Simplicity is bliss.
- *
- * @link http:://www.twig-project.org Twig Homepage
+ * @link http://www.twig-project.org Twig Homepage
  * @link http://github.com/m3nt0r My GitHub
  * @link http://twitter.com/m3nt0r My Twitter
  */
+
+if (defined('TWIG_VERSION')) { // deprecated, use TWIG_DIR. 
+	define('TWIG_DIR', 'twig-'.TWIG_VERSION);
+} else {
+	define('TWIG_VERSION', 'deprecated_constant');
+}
+
+if (!defined('TWIG_DIR')) { // folder inside ../vendors/
+	define('TWIG_DIR', 'twig-1.8.3');
+}
+
+/**
+ * Import Twig Autoloader
+ */
 App::import('Core', 'Theme');
 App::import('Vendors', 'Twig.Twig_Environment', array(
-	'file' => 'twig-'.TWIG_VERSION.DS.'lib'.DS.'Twig'.DS.'Autoloader.php'
+	'file' => TWIG_DIR.DS.'lib'.DS.'Twig'.DS.'Autoloader.php'
 ));
 Twig_Autoloader::register();
 
