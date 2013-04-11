@@ -26,7 +26,7 @@ if (!defined('TWIG_DIR')) { // folder inside ../vendors/
 /**
  * Import Twig Autoloader
  */
-App::import('Core', 'Theme');
+App::import('View', 'Theme');
 App::import('Vendors', 'Twig.Twig_Environment', array(
 	'file' => TWIG_DIR.DS.'lib'.DS.'Twig'.DS.'Autoloader.php'
 ));
@@ -102,6 +102,7 @@ class TwigView extends ThemeView {
 		parent::__construct($controller, $register);
 		$this->twigPluginPath = dirname(dirname(__FILE__)) . DS;
 		$this->twigExtensionPath = $this->twigPluginPath . 'extensions';
+		$this->pageTitle = $controller->pageTitle;
 		
 		// import plugin options
 		$appOptions = Configure::read('TwigView');
@@ -115,9 +116,18 @@ class TwigView extends ThemeView {
 		// Setup template paths
 		$pluginFolder = Inflector::underscore($this->plugin);
 		$paths = $this->_paths($pluginFolder);
-		foreach ($paths as $path) {
+		foreach ($paths as $i => $path) {
 			// Make "{% include 'test.ctp' %}" a replacement for self::element()
 			$paths[] = $path . 'elements' . DS;
+		}
+		
+		// check if all paths really exist. unfortunately Twig_Loader_Filesystem does an is_dir() for each path
+		// while CakePHP just assumes you know what you are doing.
+		foreach ($paths as $i => $path) {
+			if (!is_dir($path)) {
+				unset($paths[$i]);
+				continue; // skip
+			}
 		}
 		
 		// Setup Twig Environment
@@ -195,6 +205,10 @@ class TwigView extends ThemeView {
 				echo '<pre><h2>Twig Error</h2>'.htmlentities($e->getMessage()).'</pre>';
 			}
 		} else {
+			if (!isset($___dataForView['cakeDebug'])) {
+				$___dataForView['cakeDebug'] = null;
+			}
+			
 			extract($___dataForView, EXTR_SKIP);
 			ob_start();
 			if ((Configure::read() > 0)) {
@@ -236,16 +250,16 @@ class TwigView extends ThemeView {
 	 *
 	 * This realizes the concept of Elements, (or "partial layouts")
 	 * and the $params array is used to send data to be used in the
-	 * Element.  Elements can be cached through use of the cache key.
+	 * Element.	 Elements can be cached through use of the cache key.
 	 *
 	 * @param string $name Name of template file in the/app/views/elements/ folder
 	 * @param array $params Array of data to be made available to the for rendered
-	 *                      view (i.e. the Element)
-	 *    Special params:
+	 *						view (i.e. the Element)
+	 *	  Special params:
 	 *		cache - enable caching for this element accepts boolean or strtotime compatible string.
-	 *      Can also be an array
+	 *		Can also be an array
 	 *				if an array,'time' is used to specify duration of cache.  'key' can be used to
-	 *              create unique cache files.
+	 *				create unique cache files.
 	 *
 	 * @return string Rendered Element
 	 * @access public
