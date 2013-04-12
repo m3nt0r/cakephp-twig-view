@@ -102,7 +102,11 @@ class TwigView extends ThemeView {
 		parent::__construct($controller, $register);
 		$this->twigPluginPath = dirname(dirname(__FILE__)) . DS;
 		$this->twigExtensionPath = $this->twigPluginPath . 'extensions';
-		$this->pageTitle = $controller->pageTitle;
+		
+		// import page title, if assigned the old way
+		if (isset($controller->pageTitle)) {
+			$this->pageTitle = $controller->pageTitle;
+		}
 		
 		// import plugin options
 		$appOptions = Configure::read('TwigView');
