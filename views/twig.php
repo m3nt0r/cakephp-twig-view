@@ -111,7 +111,7 @@ class TwigView extends ThemeView {
 		// import plugin options
 		$appOptions = Configure::read('TwigView');
 		if (!empty($appOptions) && is_array($appOptions)) {
-			$this->twigOptions = array_merge($this->twigOptions, $twigOptions);
+			$this->twigOptions = array_merge($this->twigOptions, $appOptions);
 		}
 		
 		// set preferred extension
