@@ -2,7 +2,7 @@
 /**
  * TwigView for CakePHP
  * 
- * @version 0.7.1
+ * @version 0.8.0
  * @package app.views
  * @subpackage app.views.twig
  * @author Kjell Bublitz <m3nt0r.de@gmail.com>
@@ -13,51 +13,16 @@
  * @link http://twitter.com/m3nt0r My Twitter
  */
 
-if (defined('TWIG_VERSION')) { // deprecated, use TWIG_DIR. 
-	define('TWIG_DIR', 'twig-'.TWIG_VERSION);
-} else {
-	define('TWIG_VERSION', 'deprecated_constant');
-}
-
-if (!defined('TWIG_DIR')) { // folder inside ../vendors/
-	define('TWIG_DIR', 'twig-1.8.3');
-}
+/**
+ * Composer
+ */
+App::import('Vendor', 'Twig.Autoload');
 
 /**
- * Import Twig Autoloader
+ * Base Classes
  */
 App::import('View', 'Theme');
-App::import('Vendors', 'Twig.Twig_Environment', array(
-	'file' => TWIG_DIR.DS.'lib'.DS.'Twig'.DS.'Autoloader.php'
-));
-Twig_Autoloader::register();
-
-/**
- * Inherit for Filter Extensions
- *
- * @package app.views.twig
- * @subpackage app.views.twig-filters
- * @author Kjell Bublitz
- */
-abstract class TwigView_Extension {
-	
-	/**
-	 * Instance and register any given class
-	 *	
-	 * @author Kjell Bublitz
-	 * @param string $className 
-	 * @return object
-	 */
-	protected static function helperObject($className) {
-		$registryKey = 'TwigView_Extension_'.$className;
-		$object = ClassRegistry::getObject($registryKey);	
-		if (is_a($object, $className)) return $object;
-		$object = new $className();
-		ClassRegistry::addObject($registryKey, $object);	
-		return $object;
-	}
-}
-
+App::import('Lib', 'Twig.TwigExtension');
 
 /**
  * TwigView Class 
