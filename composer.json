@@ -1,5 +1,6 @@
 {
     "name": "m3nt0r/cakphp-twig-view",
+    "version": "0.8.0",
     "description": "Twig for CakePHP 1.3",
     "homepage": "https://github.com/m3nt0r/cakephp-twig-view",
     "license": "MIT",
