@@ -1,0 +1,23 @@
+{
+    "name": "m3nt0r/cakphp-twig-view",
+    "description": "Twig for CakePHP 1.3",
+    "homepage": "https://github.com/m3nt0r/cakephp-twig-view",
+    "license": "MIT",
+    "type": "library",
+    "keywords": ["templating", "cakephp"],
+    "config": {
+        "vendor-dir": "vendors"
+    },
+    "authors": [
+        {
+            "name": "Kjell Bublitz",
+            "email": "m3nt0r.de@gmail.com",
+            "homepage": "http://m3nt0r.me",
+            "role": "Lead Developer"
+        }
+    ],
+    "require": {
+        "twig/twig": "~1.16",
+        "twig/extensions": "~1.2"
+    }
+}
